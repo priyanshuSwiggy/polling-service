@@ -1,0 +1,9 @@
+api:
+  url: "https://openexchangerates.org/api/latest.json"
+  key: "da7046fc817e4b9794df828d24c80027"
+db:
+  conn: "host=localhost user=root password=root dbname=conversiondb port=5432 sslmode=disable"
+  table: "conversion_rates"
+kafka:
+  brokers: "localhost:9092"
+  topic: "currency_updates"
