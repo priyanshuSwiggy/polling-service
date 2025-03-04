@@ -13,7 +13,7 @@ type Config struct {
 	DB struct {
 		Conn  string `yaml:"conn"`
 		Table string `yaml:"table"`
-	} `yaml:"db"`
+	} `yaml:"dao"`
 	Kafka struct {
 		Brokers string `yaml:"brokers"`
 		Topic   string `yaml:"topic"`

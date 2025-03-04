@@ -3,7 +3,7 @@ package polling
 import (
 	"log"
 	"polling-service/api"
-	"polling-service/db"
+	"polling-service/dao"
 	"polling-service/kafka"
 	"time"
 )
@@ -25,7 +25,7 @@ func PollAndPublish() {
 			log.Println("Failed to fetch rates:", err)
 			continue
 		}
-		storedRates, err := db.GetStoredRates()
+		storedRates, err := dao.GetStoredRates()
 		if err != nil {
 			log.Println("Failed to get stored rates:", err)
 			continue

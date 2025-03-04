@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"encoding/json"
+	"log"
 	"polling-service/util"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -24,6 +25,7 @@ func SendToKafka(changes map[string]float64) error {
 
 	for currency, rate := range changes {
 		message, _ := json.Marshal(ExchangeRate{Currency: currency, Rate: rate})
+		log.Printf("Sending message to Kafka: %s", message)
 		producer.Produce(&kafka.Message{
 			TopicPartition: kafka.TopicPartition{Topic: &util.AppConfig.Kafka.Topic, Partition: kafka.PartitionAny},
 			Value:          message,
