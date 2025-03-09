@@ -2,11 +2,12 @@ package polling
 
 import (
 	"log"
-	"polling-service/api"
-	"polling-service/dao"
-	"polling-service/kafka"
 	"time"
 )
+
+type FetchRatesFunc func() (map[string]float64, error)
+type GetStoredRatesFunc func() (map[string]float64, error)
+type SendToKafkaFunc func(changes map[string]float64) error
 
 func detectChanges(newRates, storedRates map[string]float64) map[string]float64 {
 	changes := make(map[string]float64)
@@ -18,21 +19,21 @@ func detectChanges(newRates, storedRates map[string]float64) map[string]float64 
 	return changes
 }
 
-func PollAndPublish() {
+func PollAndPublish(fetchRates FetchRatesFunc, getStoredRates GetStoredRatesFunc, sendToKafka SendToKafkaFunc) {
 	for {
-		newRates, err := api.FetchRates()
+		newRates, err := fetchRates()
 		if err != nil {
 			log.Println("Failed to fetch rates:", err)
 			continue
 		}
-		storedRates, err := dao.GetStoredRates()
+		storedRates, err := getStoredRates()
 		if err != nil {
 			log.Println("Failed to get stored rates:", err)
 			continue
 		}
 		changes := detectChanges(newRates, storedRates)
 		if len(changes) > 0 {
-			if err := kafka.SendToKafka(changes); err != nil {
+			if err := sendToKafka(changes); err != nil {
 				log.Println("Failed to send to Kafka:", err)
 			}
 		}
