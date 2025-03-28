@@ -1,44 +1,54 @@
-# Stage 1: Build the Go application
+# Use the official Golang image as the base image
 FROM golang:1.23-alpine AS builder
-LABEL authors="priyanshu"
 
-# Install the file package
-RUN apk add --no-cache file
+# Install build tools and dependencies
+RUN apk add --no-cache gcc g++ make git pkgconfig bash zlib-dev zstd-dev lz4-dev openssl-dev libc-dev musl-dev
 
-# Set the working directory inside the container
+# Install librdkafka
+RUN git clone https://github.com/edenhill/librdkafka.git \
+    && cd librdkafka \
+    && ./configure --prefix /usr \
+    && make \
+    && make install
+
+# Set the working directory
 WORKDIR /app
 
-# Copy the Go modules manifests
+# Copy go mod and sum files
 COPY go.mod go.sum ./
 
-# Download the Go modules
-RUN go mod download
+# Download all dependencies and tidy up the mod file
+RUN go mod download && go mod tidy
 
-# Copy the rest of the application code
+# Copy the source code
 COPY . .
 
-# Set environment variables for the target OS and architecture
-ENV GOOS=linux
-ENV GOARCH=arm64
+# List contents of /app for debugging
+RUN ls -la /app
 
-# Build the Go application
-RUN go build -o polling-service
+# Build the application
+RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o main .
 
-# Verify the binary architecture
-RUN file polling-service
+# List contents of /app again to verify the binary was created
+RUN ls -la /app
 
-# Stage 2: Create the final image
+# Use a smaller base image for the final image
 FROM alpine:latest
-LABEL authors="priyanshu"
 
-# Set the working directory inside the container
-WORKDIR /app
+# Install runtime dependencies and bind-tools for DNS troubleshooting
+RUN apk add --no-cache ca-certificates librdkafka bind-tools
+
+# Set the working directory
+WORKDIR /root/
 
 # Copy the binary from the builder stage
-COPY --from=builder /app/polling-service .
+COPY --from=builder /app/main .
 
-# Expose the port the application runs on
+# Copy the config file
+COPY config.yaml .
+
+# Expose the port your application uses (if needed)
 EXPOSE 8082
 
-# Command to run the executable
-CMD ["./polling-service"]
+# Run the binary
+CMD ["./main"]

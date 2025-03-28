@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"polling-service/util"
 )
 
 type ExchangeRate struct {
@@ -15,7 +16,8 @@ type ExchangeRate struct {
 
 func GetStoredRates() (map[string]float64, error) {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
+		Region:   aws.String("us-west-2"),
+		Endpoint: aws.String(util.AppConfig.DB.Conn),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
